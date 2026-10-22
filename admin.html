@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>后台管理 - 校园智能问答助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "Microsoft YaHei", sans-serif; background: #f5f6fa; padding: 20px; }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      max-width: 1100px; margin: 0 auto 20px;
+    }
+    .header h1 { font-size: 20px; color: #333; }
+    .header a { color: #667eea; text-decoration: none; font-size: 14px; margin-left: 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .card h3 { font-size: 16px; margin-bottom: 14px; color: #333; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .form-row input, .form-row textarea, .form-row select {
+      width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;
+      font-size: 14px; outline: none; font-family: inherit;
+    }
+    .form-row input:focus, .form-row textarea:focus, .form-row select:focus { border-color: #667eea; }
+    .form-row textarea { min-height: 80px; resize: vertical; }
+    .form-inline { display: flex; gap: 12px; }
+    .form-inline .form-row { flex: 1; }
+    .btn {
+      padding: 10px 20px; background: #667eea; color: #fff; border: none;
+      border-radius: 8px; cursor: pointer; font-size: 14px;
+    }
+    .btn:hover { background: #5568d3; }
+    .btn-danger { background: #e74c3c; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
+    th { background: #f9fafc; color: #666; font-weight: normal; }
+    td.keywords { color: #667eea; max-width: 160px; }
+    td.answer { max-width: 320px; word-break: break-all; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; margin-right: 4px;
+    }
+    .badge-weekly { background: #fff3e0; color: #e67e22; }
+    .badge-normal { background: #eef0ff; color: #667eea; }
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: #333; color: #fff; padding: 10px 24px; border-radius: 8px;
+      font-size: 14px; opacity: 0; transition: 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📚 后台管理</h1>
+    <div>
+      <a href="/" target="_blank">查看前台</a>
+      <a href="/admin/logout">退出登录</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h3>➕ 添加新条目</h3>
+      <div class="form-inline">
+        <div class="form-row">
+          <label>类型</label>
+          <select id="addType" onchange="toggleType()">
+            <option value="normal">普通问答</option>
+            <option value="weekly">本周大事报</option>
+          </select>
+        </div>
+        <div class="form-row" id="dateRow" style="display:none;">
+          <label>日期（大事报必填）</label>
+          <input type="date" id="addDate">
+        </div>
+      </div>
+      <div class="form-row" id="keywordsRow">
+        <label>关键词（英文逗号分隔）</label>
+        <input type="text" id="addKeywords" placeholder="选课,选课时间,课程">
+      </div>
+      <div class="form-row">
+        <label>内容 / 回答</label>
+        <textarea id="addAnswer" placeholder="填写内容……"></textarea>
+      </div>
+      <button class="btn" onclick="addItem()">添加</button>
+    </div>
+
+    <div class="card">
+      <h3>📋 现有知识（共 {{ knowledge|length }} 条）</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th style="width:90px;">类型</th>
+            <th style="width:100px;">日期</th>
+            <th style="width:180px;">关键词</th>
+            <th>内容</th>
+            <th style="width:140px;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in knowledge %}
+          <tr data-index="{{ loop.index0 }}">
+            <td>{{ loop.index }}</td>
+            <td>
+              {% if item.type == 'weekly' %}
+                <span class="badge badge-weekly">大事报</span>
+              {% else %}
+                <span class="badge badge-normal">普通</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if item.type == 'weekly' %}
+                <input type="date" value="{{ item.date or '' }}" id="date-{{ loop.index0 }}" style="width:100%;padding:4px;border:1px solid #eee;border-radius:6px;font-size:12px;">
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="keywords">
+              {% if item.type != 'weekly' %}
+                <input type="text" value="{{ item.keywords|join(',') }}" id="kw-{{ loop.index0 }}" style="width:100%;padding:6px;border:1px solid #eee;border-radius:6px;font-size:13px;">
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="answer">
+              <textarea id="ans-{{ loop.index0 }}" style="width:100%;min-height:60px;padding:6px;border:1px solid #eee;border-radius:6px;font-size:13px;">{{ item.answer }}</textarea>
+            </td>
+            <td>
+              <button class="btn btn-sm" onclick="updateItem({{ loop.index0 }}, '{{ item.type or 'normal' }}')">保存</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteItem({{ loop.index0 }})">删除</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2000);
+    }
+
+    function toggleType() {
+      const type = document.getElementById("addType").value;
+      document.getElementById("dateRow").style.display = type === "weekly" ? "block" : "none";
+      document.getElementById("keywordsRow").style.display = type === "weekly" ? "none" : "block";
+    }
+
+    async function addItem() {
+      const type = document.getElementById("addType").value;
+      const keywords = document.getElementById("addKeywords").value;
+      const answer = document.getElementById("addAnswer").value;
+      const date = document.getElementById("addDate").value;
+      if (!answer) { showToast("内容不能为空"); return; }
+      if (type === "normal" && !keywords) { showToast("普通问答的关键词不能为空"); return; }
+      if (type === "weekly" && !date) { showToast("大事报必须选择日期"); return; }
+      const res = await fetch("/admin/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keywords, answer, date, type })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast("添加成功"); setTimeout(() => location.reload(), 600); }
+      else { showToast(data.msg || "添加失败"); }
+    }
+
+    async function updateItem(idx, type) {
+      let keywords = "", date = "";
+      if (type !== "weekly") {
+        keywords = document.getElementById("kw-" + idx).value;
+      } else {
+        const dateEl = document.getElementById("date-" + idx);
+        date = dateEl ? dateEl.value : "";
+      }
+      const answer = document.getElementById("ans-" + idx).value;
+      const res = await fetch("/admin/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index: idx, keywords, answer, date, type })
+      });
+      const data = await res.json();
+      if (data.ok) showToast("保存成功");
+      else showToast(data.msg || "保存失败");
+    }
+
+    async function deleteItem(idx) {
+      if (!confirm("确定删除这条吗？")) return;
+      const res = await fetch("/admin/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index: idx })
+      });
+      const data = await res.json();
+      if (data.ok) { showToast("删除成功"); setTimeout(() => location.reload(), 600); }
+      else showToast(data.msg || "删除失败");
+    }
+  </script>
+</body>
+</html>

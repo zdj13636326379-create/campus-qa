@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校园智能问答助手</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <div class="logo">🎓</div>
+        <div>
+          <h1>校园智能问答助手</h1>
+          <p>选课 · 比赛 · 教室 · 交通，一问即答</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="chat-box" id="chatBox">
+      <div class="message bot">
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          你好！我是校园智能问答助手，可以帮你查宿舍、选课、军训、医保、交通等信息。请问有什么可以帮你？
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="questionInput" placeholder="输入你的问题，例如：医保怎么参保？">
+      <button onclick="sendQuestion()" id="sendBtn">发送</button>
+    </div>
+
+    <div class="quick-questions">
+      <span class="quick-title">快捷提问：</span>
+      <span onclick="askWeekly()">📰 本周大事报</span>
+      <span onclick="quickAsk('宿舍有独立卫浴吗')">🛏️ 宿舍情况</span>
+      <span onclick="quickAsk('选课怎么选')">📚 选课教程</span>
+      <span onclick="quickAsk('军训可以免训吗')">🎖️ 军训免训</span>
+      <span onclick="quickAsk('医保怎么参保')">🏥 医保参保</span>
+      <span onclick="quickAsk('快递在哪里取')">📦 快递取件</span>
+      <span onclick="quickAsk('怎么从佘山站到学校')">🚌 来校交通</span>
+      <span onclick="quickAsk('图书馆怎么预约座位')">📖 图书馆预约</span>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
